@@ -1,1 +1,3 @@
 sphinxcontrib-napoleon
+watson-common >= 1.0.0
+watson-events >= 1.0.0
