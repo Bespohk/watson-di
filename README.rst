@@ -10,7 +10,7 @@ Docs <http://watson-di.readthedocs.org/>`__.
 Build Status
 ^^^^^^^^^^^^
 
-|Build Status| |Coverage Status| |Pypi|
+|Build Status| |Coverage Status| |Version| |Downloads| |Licence|
 
 Installation
 ------------
@@ -23,9 +23,13 @@ Dependencies
 -  watson-common
 -  watson-events
 
-.. |Build Status| image:: https://api.travis-ci.org/bespohk/watson-di.png?branch=master
-   :target: https://travis-ci.org/bespohk/watson-di
+.. |Build Status| image:: https://api.travis-ci.org/Bespohk/watson-di.png?branch=master
+   :target: https://travis-ci.org/Bespohk/watson-di
 .. |Coverage Status| image:: https://coveralls.io/repos/bespohk/watson-di/badge.png
    :target: https://coveralls.io/r/bespohk/watson-di
-.. |Pypi| image:: https://pypip.in/v/watson-di/badge.png
-   :target: https://crate.io/packages/watson-di/
+.. |Version| image:: https://pypip.in/v/watson-di/badge.png
+   :target: https://pypi.python.org/pypi/watson-di/
+.. |Downloads| image:: https://pypip.in/d/watson-di/badge.png
+   :target: https://pypi.python.org/pypi/watson-di/
+.. |Licence| image:: https://pypip.in/license/watson-di/badge.png
+   :target: https://pypi.python.org/pypi/watson-di/

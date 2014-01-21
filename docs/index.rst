@@ -14,13 +14,7 @@ Watson Di is a simple dependency injection container that can store and retrieve
 Build Status
 ------------
 
-+-----------+------------------+---------------------+
-| Branch    | Status           | Coverage            |
-+===========+==================+=====================+
-| Master    | |Build StatusM|  | |Coverage Status|   |
-+-----------+------------------+---------------------+
-| Develop   | |Build StatusD|  |                     |
-+-----------+------------------+---------------------+
+|Build Status| |Coverage Status| |Version| |Downloads| |Licence|
 
 Installation
 ------------
@@ -44,11 +38,13 @@ Table of Contents
 
 .. include:: toc.rst.inc
 
+.. |Build Status| image:: https://api.travis-ci.org/Bespohk/watson-di.png?branch=master
+   :target: https://travis-ci.org/Bespohk/watson-di
 .. |Coverage Status| image:: https://coveralls.io/repos/bespohk/watson-di/badge.png
    :target: https://coveralls.io/r/bespohk/watson-di
-.. |Build StatusD| image:: https://api.travis-ci.org/bespohk/watson-di.png?branch=develop
-   :target: https://travis-ci.org/bespohk/watson-di
-.. |Build StatusM| image:: https://api.travis-ci.org/bespohk/watson-di.png?branch=master
-   :target: https://travis-ci.org/bespohk/watson-di
-.. |Pypi| image:: https://pypip.in/v/watson-di/badge.png
-   :target: https://crate.io/packages/watson-di/
+.. |Version| image:: https://pypip.in/v/watson-di/badge.png
+   :target: https://pypi.python.org/pypi/watson-di/
+.. |Downloads| image:: https://pypip.in/d/watson-di/badge.png
+   :target: https://pypi.python.org/pypi/watson-di/
+.. |Licence| image:: https://pypip.in/license/watson-di/badge.png
+   :target: https://pypi.python.org/pypi/watson-di/
