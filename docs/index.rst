@@ -22,6 +22,11 @@ Build Status
 | Develop   | |Build StatusD|  |                     |
 +-----------+------------------+---------------------+
 
+Installation
+------------
+
+``pip install watson-di``
+
 Testing
 -------
 
