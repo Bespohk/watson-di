@@ -64,7 +64,7 @@ with open(os.path.join(path, 'requirements.txt')) as f:
 setup(
     name='watson-di',
     version=watson.di.__version__,
-    url='http://github.com/bespohk/watson-di',
+    url='http://github.com/watsonpy/watson-di',
     description='Dependency Injection made simple.',
     long_description=readme,
 

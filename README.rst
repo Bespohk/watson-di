@@ -23,10 +23,10 @@ Dependencies
 -  watson-common
 -  watson-events
 
-.. |Build Status| image:: https://api.travis-ci.org/Bespohk/watson-di.png?branch=master
-   :target: https://travis-ci.org/Bespohk/watson-di
-.. |Coverage Status| image:: https://coveralls.io/repos/bespohk/watson-di/badge.png
-   :target: https://coveralls.io/r/bespohk/watson-di
+.. |Build Status| image:: https://api.travis-ci.org/watsonpy/watson-di.png?branch=master
+   :target: https://travis-ci.org/watsonpy/watson-di
+.. |Coverage Status| image:: https://coveralls.io/repos/watsonpy/watson-di/badge.png
+   :target: https://coveralls.io/r/watsonpy/watson-di
 .. |Version| image:: https://pypip.in/v/watson-di/badge.png
    :target: https://pypi.python.org/pypi/watson-di/
 .. |Downloads| image:: https://pypip.in/d/watson-di/badge.png
