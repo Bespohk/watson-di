@@ -59,11 +59,6 @@ class TestIoc(object):
         container.add('dep', dep)
         assert container.get('dep') == dep
 
-    def test_definition_doesnt_exist(self):
-        with raises(KeyError):
-            container = IocContainer()
-            container.get('test')
-
     def test_definition_item_doesnt_exist(self):
         with raises(KeyError):
             container = IocContainer({

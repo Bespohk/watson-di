@@ -43,32 +43,26 @@ class ConstructorInjection(Base):
 
     def __call__(self, event):
         item = event.target['item']
-        instantiated = False
-        raw = None
         if isinstance(item, FunctionType):
-            raw = item
+            imported_item = item
         elif not isinstance(item, str):
-            initialized = item
-            instantiated = True
+            return item
         else:
-            with ignored(ImportError, AttributeError):
-                raw = load_definition_from_string(item)
-        if not instantiated:
-            if not raw:
-                raise NameError(
-                    'Cannot initialize dependency {0}, the module may not exist.'.format(item))
-            args, kwargs = [], {}
-            if isinstance(raw, FunctionType):
-                kwargs['container'] = self.container
-            init = event.target.get('init', {})
-            if isinstance(init, dict):
-                for key, val in init.items():
-                    kwargs[key] = get_param_from_container(val, self.container)
-            elif isinstance(init, list):
-                for arg in init:
-                    args.append(get_param_from_container(arg, self.container))
-            initialized = raw(*args, **kwargs)
-        return initialized
+            try:
+                imported_item = load_definition_from_string(item)
+            except Exception as exc:
+                raise ImportError('Cannot initialize dependency {0}, the module may not exist.'.format(item)) from exc
+        init = event.target.get('init', {})
+        args, kwargs = [], {}
+        if isinstance(imported_item, FunctionType):
+            kwargs['container'] = self.container
+        if isinstance(init, dict):
+            for key, val in init.items():
+                kwargs[key] = get_param_from_container(val, self.container)
+        elif isinstance(init, list):
+            for arg in init:
+                args.append(get_param_from_container(arg, self.container))
+        return imported_item(*args, **kwargs)
 
 
 class SetterInjection(Base):

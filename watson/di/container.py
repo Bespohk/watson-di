@@ -84,15 +84,15 @@ class IocContainer(EventDispatcherAware):
 
     Attributes:
         config (dict): A dict containing the definitions, params and processors.
-        __instantiated (dict): A cache of already instantiated dependencies.
+        __instantiated__ (dict): A cache of already instantiated dependencies.
 
     """
     config = None
-    __instantiated = None
+    __instantiated__ = None
 
     @property
     def instantiated(self):
-        return self.__instantiated
+        return self.__instantiated__
 
     @property
     def params(self):
@@ -119,7 +119,7 @@ class IocContainer(EventDispatcherAware):
             config (dict): A dict containing the params, definitions and processors.
         """
         self.config = dict_deep_update(DEFAULTS, config or {})
-        self.__instantiated = {}
+        self.__instantiated__ = {}
         for event, listeners in self.config['processors'].items():
             for processor in listeners:
                 self.attach_processor(
@@ -139,13 +139,14 @@ class IocContainer(EventDispatcherAware):
             mixed: The dependency
         """
         definition = self.__find(name)
-        if name not in self.__instantiated \
-            or definition.get('type', 'singleton').lower() == 'prototype' \
-                or isinstance(self.__instantiated.get(name), FunctionType):
-                    instantiated = self.__create_instance(name, definition)
-                    self.__instantiated[name] = instantiated
+        if (name in self.__instantiated__
+                and definition.get('type', '').lower() == 'singleton'
+                and not isinstance(self.__instantiated__.get(name),
+                                   FunctionType)):
+            instantiated = self.__instantiated__[name]
         else:
-            instantiated = self.__instantiated[name]
+            instantiated = self.__create_instance(name, definition)
+            self.__instantiated__[name] = instantiated
         return instantiated
 
     def add(self, name, item, type='singleton', **kwargs):
@@ -159,7 +160,7 @@ class IocContainer(EventDispatcherAware):
         definition.update(**kwargs)
         self.definitions[name] = definition
         if not isinstance(item, str):
-            self.__instantiated[name] = item
+            self.__instantiated__[name] = item
 
     def __contains__(self, dependency):
         """Returns whether or not a dependency is defined in the container.
@@ -177,15 +178,11 @@ class IocContainer(EventDispatcherAware):
         """
         definitions = self.definitions
         if name not in definitions:
-            try:
-                load_definition_from_string(name)
-                self.add(name, name)
-                definitions = self.definitions
-            except:
-                raise KeyError('Dependency {} does not exist'.format(name))
-        if 'item' not in definitions[name]:
-            raise KeyError('item not specified in dependency definition')
+            self.add(name, name)
+            definitions = self.definitions
         definition = definitions[name]
+        if 'item' not in definition:
+            raise KeyError('item not specified in dependency definition')
         definition['type'] = definition.get('type', 'singleton').lower()
         return definition
 
