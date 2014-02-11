@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 import abc
 from types import FunctionType
-from watson.common.imports import get_qualified_name, load_definition_from_string
+from watson.common import imports
 from watson.common.contextmanagers import ignored
 from watson import di
+from watson.di.types import FUNCTION_TYPE, CLASS_TYPE
 
 
 class Base(di.ContainerAware, metaclass=abc.ABCMeta):
@@ -40,29 +41,21 @@ class ConstructorInjection(Base):
     Returns:
         mixed: The dependency
     """
-
     def __call__(self, event):
-        item = event.target['item']
-        if isinstance(item, FunctionType):
-            imported_item = item
-        elif not isinstance(item, str):
-            return item
-        else:
-            try:
-                imported_item = load_definition_from_string(item)
-            except Exception as exc:
-                raise ImportError('Cannot initialize dependency {0}, the module may not exist.'.format(item)) from exc
-        init = event.target.get('init', {})
+        definition = event.params['definition']
+        item = definition['item']
         args, kwargs = [], {}
-        if isinstance(imported_item, FunctionType):
+        if 'init' in definition:
+            init = definition['init']
+            if isinstance(init, dict):
+                for key, val in init.items():
+                    kwargs[key] = get_param_from_container(val, self.container)
+            elif isinstance(init, list):
+                for arg in init:
+                    args.append(get_param_from_container(arg, self.container))
+        if definition.get('call_type', None) == FUNCTION_TYPE:
             kwargs['container'] = self.container
-        if isinstance(init, dict):
-            for key, val in init.items():
-                kwargs[key] = get_param_from_container(val, self.container)
-        elif isinstance(init, list):
-            for arg in init:
-                args.append(get_param_from_container(arg, self.container))
-        return imported_item(*args, **kwargs)
+        return item(*args, **kwargs)
 
 
 class SetterInjection(Base):
@@ -79,20 +72,21 @@ class SetterInjection(Base):
     def __call__(self, event):
         item = event.target
         definition = event.params['definition']
-        for setter, args in definition.get('setter', {}).items():
-            method = getattr(item, setter)
-            if isinstance(args, dict):
-                kwargs = {arg: get_param_from_container(
-                          value,
-                          self.container) for arg,
-                          value in args.items()}
-                method(**kwargs)
-            elif isinstance(args, list):
-                args = [get_param_from_container(arg, self.container)
-                        for arg in args]
-                method(*args)
-            else:
-                method(get_param_from_container(args, self.container))
+        if 'setter' in definition:
+            for setter, args in definition['setter'].items():
+                method = getattr(item, setter)
+                if isinstance(args, dict):
+                    kwargs = {arg: get_param_from_container(
+                              value,
+                              self.container) for arg,
+                              value in args.items()}
+                    method(**kwargs)
+                elif isinstance(args, list):
+                    args = [get_param_from_container(arg, self.container)
+                            for arg in args]
+                    method(*args)
+                else:
+                    method(get_param_from_container(args, self.container))
         return item
 
 
@@ -101,7 +95,8 @@ class AttributeInjection(Base):
     """Responsible for injecting required values into attributes.
 
     Args:
-        event (watson.events.types.Event): The event dispatched from the container.
+        event (watson.events.types.Event): The event dispatched from the
+                                           container.
 
     Returns:
         mixed: The dependency
@@ -109,13 +104,14 @@ class AttributeInjection(Base):
 
     def __call__(self, event):
         item = event.target
-        for prop, value in event.params['definition'].get('property', {}).items():
-            setattr(
-                item,
-                prop,
-                get_param_from_container(
-                    value,
-                    self.container))
+        if 'property' in event.params['definition']:
+            for prop, value in event.params['definition']['property'].items():
+                setattr(
+                    item,
+                    prop,
+                    get_param_from_container(
+                        value,
+                        self.container))
         return item
 
 
@@ -152,10 +148,11 @@ def get_param_from_container(param, container):
     """
     if param in container.params:
         param = container.params[param]
-        if param in container.definitions:
+        if param in container:
             param = container.get(param)
-    elif param in container.definitions:
+    elif param in container:
         param = container.get(param)
-    if isinstance(param, FunctionType):
-        param = param(container)
+    else:
+        if isinstance(param, FunctionType):
+            param = param(container)
     return param

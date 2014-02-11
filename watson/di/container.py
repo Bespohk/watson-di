@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-from types import FunctionType
-from watson.di import processors
-from watson.events.dispatcher import EventDispatcherAware
-from watson.events.types import Event
+from inspect import isclass, isfunction
+from watson.common import imports
 from watson.common.datastructures import dict_deep_update
-from watson.common.imports import (get_qualified_name,
-                                   load_definition_from_string)
+from watson.events import dispatcher, types
+from watson.di import processors
+from watson.di.types import FUNCTION_TYPE, CLASS_TYPE
 
 
 PRE_EVENT = 'event.container.pre'
@@ -26,8 +25,7 @@ DEFAULTS = {
 }
 
 
-class IocContainer(EventDispatcherAware):
-
+class IocContainer(dispatcher.EventDispatcherAware):
     """A simple dependency injection container that can store and retrieve
     dependencies for an application.
 
@@ -89,120 +87,25 @@ class IocContainer(EventDispatcherAware):
     """
     config = None
     __instantiated__ = None
-
-    @property
-    def instantiated(self):
-        return self.__instantiated__
-
-    @property
-    def params(self):
-        """Convenience method for retrieving the params.
-
-        Returns:
-            dict: A dict of params.
-        """
-        return self.config['params']
-
-    @property
-    def definitions(self):
-        """Convenience method for retrieving the definitions.
-
-        Returns:
-            dict: A dict of params.
-        """
-        return self.config['definitions']
+    _pre_process_event = None
+    _post_process_event = None
 
     def __init__(self, config=None):
         """Initializes the container and set some default configuration options.
 
         Args:
-            config (dict): A dict containing the params, definitions and processors.
+            config (dict): The params, definitions and processors.
         """
+        self.__instantiated__ = {}
         self.config = dict_deep_update(DEFAULTS, config or {})
         self.__instantiated__ = {}
+        self._pre_process_event = types.Event(name=PRE_EVENT)
+        self._post_process_event = types.Event(name=POST_EVENT)
         for event, listeners in self.config['processors'].items():
             for processor in listeners:
                 self.attach_processor(
                     event,
-                    load_definition_from_string(processor)())
-
-    def get(self, name):
-        """Retrieve a dependency from the container.
-
-        Args:
-            name (string): The name of the dependency to retrieve.
-
-        Raises:
-            KeyError: If the definition or item within the definition are not specified.
-
-        Returns:
-            mixed: The dependency
-        """
-        definition = self.__find(name)
-        if (name in self.__instantiated__
-                and definition.get('type', '').lower() == 'singleton'
-                and not isinstance(self.__instantiated__.get(name),
-                                   FunctionType)):
-            instantiated = self.__instantiated__[name]
-        else:
-            instantiated = self.__create_instance(name, definition)
-            self.__instantiated__[name] = instantiated
-        return instantiated
-
-    def add(self, name, item, type='singleton', **kwargs):
-        """Add a dependency to the container (either already instatiated or not).
-
-        Args:
-            name (string): The name used to reference the dependency
-            item (mixed): The dependency to add (either qualified name or instance)
-        """
-        definition = self.definitions.get(name, {'item': item, 'type': type})
-        definition.update(**kwargs)
-        self.definitions[name] = definition
-        if not isinstance(item, str):
-            self.__instantiated__[name] = item
-
-    def __contains__(self, dependency):
-        """Returns whether or not a dependency is defined in the container.
-
-        Args:
-            dependency (string): The name of the dependency to find.
-        """
-        return dependency in self.definitions
-
-    def __find(self, name):
-        """
-        Attempts to retrieve a definition from the container configuration. If
-        no definition is found, it will attempt to add the requested dependency
-        to the container.
-        """
-        definitions = self.definitions
-        if name not in definitions:
-            self.add(name, name)
-            definitions = self.definitions
-        definition = definitions[name]
-        if 'item' not in definition:
-            raise KeyError('item not specified in dependency definition')
-        definition['type'] = definition.get('type', 'singleton').lower()
-        return definition
-
-    def __create_instance(self, name, definition):
-        params = {
-            'definition': definition,
-            'dependency': name
-        }
-        pre_process_event = Event(
-            name=PRE_EVENT,
-            target=definition,
-            params=params)
-        result = self.dispatcher.trigger(pre_process_event)
-        dependency = result.last()
-        post_process_event = Event(
-            name=POST_EVENT,
-            target=dependency,
-            params=params)
-        self.dispatcher.trigger(post_process_event)
-        return dependency
+                    imports.load_definition_from_string(processor)())
 
     def attach_processor(self, event, processor):
         """Attach a processor to the container.
@@ -220,8 +123,132 @@ class IocContainer(EventDispatcherAware):
         processor.container = self
         self.dispatcher.add(event, processor)
 
+    def get(self, name):
+        """Retrieve a dependency from the container.
+
+        Args:
+            name (string): The name of the dependency to retrieve.
+
+        Raises:
+            KeyError: If the definition or item within the definition are
+                      not specified.
+
+        Returns:
+            mixed: The dependency
+        """
+        if name not in self:
+            self.add_definition(name, {'item': name})
+        if name in self.__instantiated__:
+            return self.__instantiated__[name]
+        definition = self.config['definitions'][name]
+        instance = None
+        obj = None
+        if 'call_type' not in definition:
+            # definition hasn't be retrieved yet, determine the type of
+            # dependency
+            obj = self._get_dependency(definition)
+            call_type = self._get_type(obj)
+            definition['call_type'] = call_type
+            if call_type:
+                definition['item'] = obj
+            else:
+                instance = obj
+        if definition['call_type']:
+            # The dependency needs to be instantiated or called
+            instance = self._create_instance(name, definition)
+        if (definition.get('type', None) != 'prototype'
+                or not definition['call_type']):
+            # The dependency should only be retrieved once
+            self._add_to_instantiated(name, instance)
+        return instance
+
+    def add(self, name, obj, type_='singleton'):
+        """Add an instantiated dependency to the container.
+
+        Args:
+            name (string): The name used to reference the dependency
+            obj (mixed): The dependency to add
+            type_ (string): prototype|singleton depending on if it should be
+                            instantiated on each IocContainer.get call.
+        """
+        self._add_to_instantiated(name, obj)
+        self.add_definition(name,
+                            {'type': type_,
+                             'item': imports.get_qualified_name(obj)})
+
+    def add_definition(self, name, definition):
+        """Adds a dependency definition to the container.
+
+        Args:
+            name (string): The name used to reference the dependency
+            definition (dict): The definition of the dependency.
+        """
+        self.definitions[name] = definition
+
+    # Convenience methods
+
+    @property
+    def instantiated(self):
+        return self.__instantiated__
+
+    @property
+    def params(self):
+        """Convenience method for retrieving the params.
+
+        Returns:
+            dict: A dict of params.
+        """
+        return self.config.get('params', {})
+
+    @property
+    def definitions(self):
+        """Convenience method for retrieving the definitions.
+
+        Returns:
+            dict: A dict of params.
+        """
+        return self.config['definitions']
+
+    # Internals
+
+    def _get_type(self, obj):
+        type_ = CLASS_TYPE
+        if isfunction(obj):
+            type_ = FUNCTION_TYPE
+        elif isinstance(obj, (list, tuple, dict, set, str)):
+            type_ = None
+        return type_
+
+    def _create_instance(self, name, definition):
+        params = {'definition': definition, 'name': name}
+        self._pre_process_event.target = self
+        self._pre_process_event.params = params
+        result = self.dispatcher.trigger(self._pre_process_event)
+        obj = result.last()
+        self._post_process_event.target = obj
+        self._post_process_event.params = params
+        self.dispatcher.trigger(self._post_process_event)
+        return obj
+
+    def _add_to_instantiated(self, name, item):
+        self.__instantiated__[name] = item
+
+    def _get_dependency(self, definition):
+        """Loads a definition item.
+        """
+        item = definition['item']
+        if isinstance(item, str):
+            item = imports.load_definition_from_string(definition['item'])
+        return item
+
+    def __contains__(self, name):
+        """Determine if the container contains the specific dependency.
+        """
+        return name in self.definitions
+
     def __repr__(self):
-        return ('<{0}: {1} param(s), '
-                '{2} definition(s)>').format(
-            get_qualified_name(self), len(self.config['params']),
-            len(self.config['definitions']))
+        return (
+            '<{0}: {1} param(s), {2} definition(s)>').format(
+            imports.get_qualified_name(self), len(self.params),
+            len(self.definitions)
+        )

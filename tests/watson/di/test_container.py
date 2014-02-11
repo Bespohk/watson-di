@@ -25,8 +25,7 @@ class TestIoc(object):
                     'type': 'singleton',
                 },
                 'test3': {
-                    'item':
-                    'tests.watson.di.support.sample_dependency_with_args',
+                    'item': 'tests.watson.di.support.sample_dependency_with_args',
                     'type': 'singleton',
                     'init': {
                         'arg': 'some arg'
@@ -34,17 +33,18 @@ class TestIoc(object):
                 }
             }
         })
-        container.add('def', lambda container: 'something')
+        container.add_definition('def', {'item': lambda container: 'something'})
         assert isinstance(container.get('test'), SampleDependency)
         assert container.get('test2') == 'test'
         assert container.get('def') == 'something'
         assert container.get('def') == 'something'
+        assert container.get('def') is container.get('def')
         assert container.get('test3') == 'some arg'
         assert len(container.instantiated) == 4
 
-    def test_add_item(self):
+    def test_add_definition(self):
         container = IocContainer()
-        container.add('dep', lambda container: 'something')
+        container.add_definition('dep', {'item': lambda container: 'something'})
         assert container.get('dep') == 'something'
 
     def test_add_instantiated(self):
@@ -59,6 +59,15 @@ class TestIoc(object):
         container.add('dep', dep)
         assert container.get('dep') == dep
 
+    def test_not_added(self):
+        container = IocContainer()
+        assert container.get('tests.watson.di.support.not_added') == 'not added'
+
+    def test_module_not_exist(self):
+        container = IocContainer()
+        with raises(ImportError):
+            container.get('something.blah')
+
     def test_definition_item_doesnt_exist(self):
         with raises(KeyError):
             container = IocContainer({
@@ -67,6 +76,16 @@ class TestIoc(object):
                 }
             })
             container.get('test')
+
+    def test_get_builtin(self):
+        container = IocContainer({
+            'definitions': {
+                'test': {
+                    'item': {'test': 'test'}
+                }
+            }
+        })
+        assert isinstance(container.get('test'), dict)
 
     def test_attach_invalid_processor(self):
         with raises(TypeError):

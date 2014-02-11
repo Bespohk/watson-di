@@ -22,7 +22,7 @@ class TestConstructorInjection(object):
     def test_inject_value_dict(self):
         processor = processors.ConstructorInjection()
         processor.container = IocContainer()
-        event = sample_event('tests.watson.di.support.SampleDependencyAware')
+        event = sample_event(SampleDependencyAware)
         event.target['init'] = {'sample': 'test'}
         instance = processor(event)
         assert instance.first_kw == 'test'
@@ -30,7 +30,7 @@ class TestConstructorInjection(object):
     def test_inject_value_list(self):
         processor = processors.ConstructorInjection()
         processor.container = IocContainer()
-        event = sample_event('tests.watson.di.support.SampleDependencyAware')
+        event = sample_event(SampleDependencyAware)
         event.target['init'] = ['test']
         instance = processor(event)
         assert instance.first_arg == 'test'
@@ -38,8 +38,8 @@ class TestConstructorInjection(object):
     def test_inject_value_from_dependency(self):
         processor = processors.ConstructorInjection()
         processor.container = IocContainer()
-        processor.container.add('test', sample_dependency)
-        event = sample_event('tests.watson.di.support.SampleDependencyAware')
+        processor.container.add_definition('test', {'item': sample_dependency})
+        event = sample_event(SampleDependencyAware)
         event.target['init'] = ['test']
         instance = processor(event)
         assert instance.first_arg == 'test'
@@ -48,7 +48,7 @@ class TestConstructorInjection(object):
         processor = processors.ConstructorInjection()
         processor.container = IocContainer()
         processor.container.params['test'] = 'blah2'
-        event = sample_event('tests.watson.di.support.SampleDependencyAware')
+        event = sample_event(SampleDependencyAware)
         event.target['init'] = ['test']
         instance = processor(event)
         assert instance.first_arg == 'blah2'
@@ -57,13 +57,6 @@ class TestConstructorInjection(object):
         with raises(TypeError):
             processor = SampleProcessor()
             processor('fake event')
-
-    def test_initialized_invalid_dependency(self):
-        with raises(ImportError):
-            processor = processors.ConstructorInjection()
-            processor.container = IocContainer()
-            event = sample_event('tests.watson.di.support.DoesNotExist')
-            processor(event)
 
 
 class TestSetterInjection(object):
