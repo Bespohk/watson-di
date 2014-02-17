@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from inspect import isclass, isfunction
+from inspect import isfunction
 from watson.common import imports
 from watson.common.datastructures import dict_deep_update
 from watson.events import dispatcher, types
