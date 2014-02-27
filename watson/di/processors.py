@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 import abc
 from types import FunctionType
-from watson.common import imports
-from watson.common.contextmanagers import ignored
 from watson import di
-from watson.di.types import FUNCTION_TYPE, CLASS_TYPE
+from watson.di.types import FUNCTION_TYPE
 
 
 class Base(di.ContainerAware, metaclass=abc.ABCMeta):

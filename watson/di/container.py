@@ -87,8 +87,6 @@ class IocContainer(dispatcher.EventDispatcherAware):
     """
     config = None
     __instantiated__ = None
-    _pre_process_event = None
-    _post_process_event = None
 
     def __init__(self, config=None):
         """Initializes the container and set some default configuration options.
@@ -221,13 +219,11 @@ class IocContainer(dispatcher.EventDispatcherAware):
 
     def _create_instance(self, name, definition):
         params = {'definition': definition, 'name': name}
-        self._pre_process_event.target = self
-        self._pre_process_event.params = params
-        result = self.dispatcher.trigger(self._pre_process_event)
+        event = types.Event(name=PRE_EVENT, target=self, params=params)
+        result = self.dispatcher.trigger(event)
         obj = result.last()
-        self._post_process_event.target = obj
-        self._post_process_event.params = params
-        self.dispatcher.trigger(self._post_process_event)
+        event = types.Event(name=POST_EVENT, target=obj, params=params)
+        self.dispatcher.trigger(event)
         return obj
 
     def _add_to_instantiated(self, name, item):
