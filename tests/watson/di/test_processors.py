@@ -114,3 +114,29 @@ class TestContainerAwareInjection(object):
         event.target = SampleDependencyAware()
         processor(event)
         assert event.target.container == container
+
+
+class TestFunctions(object):
+
+    def test_param_from_container(self):
+        container = IocContainer({
+            'params': {
+                'test': 'sample2'
+            },
+            'definitions': {
+                'sample': {
+                    'item': 'tests.watson.di.support.SampleDependency',
+                    'property': {
+                        'test': 'test',
+                        'test2': sample_dependency
+                    }
+                },
+                'sample2': {
+                    'item': 'tests.watson.di.support.sample_dependency'
+                }
+            }
+        })
+        sample = container.get('sample')
+        assert sample
+        assert sample.test
+        assert sample.test2 == 'test'
