@@ -1,3 +1,2 @@
 sphinxcontrib-napoleon
-watson-common == 1.1.0
-watson-events == 1.0.2
+watson-events >= 1.0.2
