@@ -68,15 +68,6 @@ class TestIoc(object):
         with raises(ImportError):
             container.get('something.blah')
 
-    def test_definition_item_doesnt_exist(self):
-        with raises(KeyError):
-            container = IocContainer({
-                'definitions': {
-                    'test': {}
-                }
-            })
-            container.get('test')
-
     def test_get_builtin(self):
         container = IocContainer({
             'definitions': {
