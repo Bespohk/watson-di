@@ -1,0 +1,3 @@
+2.1.0
+
+- Objects can now define their own __ioc_definition__ which will be used when they are constructed (if retrieved from the IoC contaienr)

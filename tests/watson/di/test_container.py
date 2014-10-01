@@ -104,3 +104,8 @@ class TestIoc(object):
         dep2 = SampleDependency()
         container.add('test', dep2)
         assert container.get('test') == dep2
+
+    def test_get_self_defined_object(self):
+        container = IocContainer()
+        obj = container.get('tests.watson.di.support.DependencyWithDefinition')
+        assert obj.the_test() == 'test'

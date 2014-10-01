@@ -145,7 +145,7 @@ class IocContainer(dispatcher.EventDispatcherAware):
             # definition hasn't be retrieved yet, determine the type of
             # dependency
             if 'item' not in definition:
-                definition['item'] = name
+                definition['item'] = name  # pragma: no cover
             obj = self._get_dependency(definition)
             call_type = self._get_type(obj)
             definition['call_type'] = call_type

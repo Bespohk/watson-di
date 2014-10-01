@@ -42,6 +42,8 @@ class ConstructorInjection(Base):
     def __call__(self, event):
         definition = event.params['definition']
         item = definition['item']
+        if hasattr(item, '__ioc_definition__'):
+            definition.update(item.__ioc_definition__)
         args, kwargs = [], {}
         if 'init' in definition:
             init = definition['init']

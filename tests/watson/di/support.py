@@ -23,6 +23,18 @@ class SampleProcessor(processors.Base):
     pass
 
 
+class DependencyWithDefinition(object):
+    __ioc_definition__ = {
+        'init': ['test']
+    }
+
+    def __init__(self, test):
+        self.test = test
+
+    def the_test(self):
+        return self.test
+
+
 class SampleDependencyAware(ContainerAware):
     first_kw = None
     first_arg = None
