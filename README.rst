@@ -27,9 +27,9 @@ Dependencies
    :target: https://travis-ci.org/watsonpy/watson-di
 .. |Coverage Status| image:: https://coveralls.io/repos/watsonpy/watson-di/badge.png
    :target: https://coveralls.io/r/watsonpy/watson-di
-.. |Version| image:: https://pypip.in/v/watson-di/badge.png
+.. |Version| image:: http://badge.kloud51.com/pypi/v/watson-di.png
    :target: https://pypi.python.org/pypi/watson-di/
-.. |Downloads| image:: https://pypip.in/d/watson-di/badge.png
+.. |Downloads| image:: http://badge.kloud51.com/pypi/d/watson-di.png
    :target: https://pypi.python.org/pypi/watson-di/
-.. |Licence| image:: https://pypip.in/license/watson-di/badge.png
+.. |Licence| image:: http://badge.kloud51.com/pypi/license/watson-di.png
    :target: https://pypi.python.org/pypi/watson-di/
