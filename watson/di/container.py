@@ -3,7 +3,7 @@ from inspect import isfunction
 from watson.common import imports
 from watson.common.datastructures import dict_deep_update
 from watson.events import dispatcher, types
-from watson.di import processors
+from watson.di import processors, exceptions
 from watson.di.types import FUNCTION_TYPE, CLASS_TYPE
 
 
@@ -236,7 +236,11 @@ class IocContainer(dispatcher.EventDispatcherAware):
         """
         item = definition['item']
         if isinstance(item, str):
-            item = imports.load_definition_from_string(definition['item'])
+            try:
+                item = imports.load_definition_from_string(definition['item'])
+            except Exception as exc:
+                raise exceptions.NotFoundError(
+                    '{} was not able to be imported.'.format(item)) from exc
         return item
 
     def __contains__(self, name):

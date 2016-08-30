@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from pytest import raises
 from watson.di.container import IocContainer
+from watson.di import exceptions
 from tests.watson.di.support import SampleDependency
 
 
@@ -42,6 +43,12 @@ class TestIoc(object):
         assert container.get('test3') == 'some arg'
         assert len(container.instantiated) == 4
 
+    def test_get_failed_object(self):
+        container = IocContainer()
+        with raises(exceptions.NotFoundError):
+            container.get('none')
+            assert True
+
     def test_add_definition(self):
         container = IocContainer()
         container.add_definition('dep', {'item': lambda container: 'something'})
@@ -65,7 +72,7 @@ class TestIoc(object):
 
     def test_module_not_exist(self):
         container = IocContainer()
-        with raises(ImportError):
+        with raises(exceptions.NotFoundError):
             container.get('something.blah')
 
     def test_get_builtin(self):
