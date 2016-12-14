@@ -240,7 +240,7 @@ class IocContainer(dispatcher.EventDispatcherAware):
                 item = imports.load_definition_from_string(definition['item'])
             except Exception as exc:
                 raise exceptions.NotFoundError(
-                    '{} was not able to be imported.'.format(item)) from exc
+                    '{} was not able to be imported ({}).'.format(item, exc)) from exc
         return item
 
     def __contains__(self, name):
