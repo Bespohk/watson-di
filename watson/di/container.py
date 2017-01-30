@@ -185,6 +185,15 @@ class IocContainer(dispatcher.EventDispatcherAware):
         """
         self.definitions[name] = definition
 
+    def update(self, config):
+        """Update the configuration.
+
+        Args:
+            config (dict): The new configuration to update with.
+        """
+        self.definitions.update(config.get('definitions', {}))
+        self.params.update(config.get('params', {}))
+
     # Convenience methods
 
     @property
