@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import abc
+from inspect import isfunction
 from types import FunctionType
 from watson import di
+from watson.common.contextmanagers import suppress
 from watson.di.types import FUNCTION_TYPE
 
 
@@ -25,6 +27,16 @@ class Base(di.ContainerAware, metaclass=abc.ABCMeta):
         raise NotImplementedError(
             'The processor <{}> must implement __call__'.format(get_qualified_name(self)))  # pragma: no cover
 
+    def get_args_kwargs(self, obj):
+        args, kwargs = [], {}
+        if isinstance(obj, dict):
+            for key, val in obj.items():
+                kwargs[key] = get_param_from_container(val, self.container)
+        elif isinstance(obj, list):
+            for arg in obj:
+                args.append(get_param_from_container(arg, self.container))
+        return args, kwargs
+
 
 class ConstructorInjection(Base):
 
@@ -39,23 +51,38 @@ class ConstructorInjection(Base):
     Returns:
         mixed: The dependency
     """
-    def __call__(self, event):
-        definition = event.params['definition']
+
+    def instantiate(self, definition):
         item = definition['item']
         if hasattr(item, '__ioc_definition__'):
             definition.update(item.__ioc_definition__)
         args, kwargs = [], {}
+        is_lambda = definition.get('call_type', None) == FUNCTION_TYPE
+        if is_lambda:
+            kwargs['container'] = self.container
         if 'init' in definition:
             init = definition['init']
-            if isinstance(init, dict):
-                for key, val in init.items():
-                    kwargs[key] = get_param_from_container(val, self.container)
-            elif isinstance(init, list):
-                for arg in init:
-                    args.append(get_param_from_container(arg, self.container))
-        if definition.get('call_type', None) == FUNCTION_TYPE:
-            kwargs['container'] = self.container
-        return item(*args, **kwargs)
+            updated_args, updated_kwargs = self.get_args_kwargs(init)
+            args.extend(updated_args)
+            kwargs.update(updated_kwargs)
+            if isfunction(init):
+                kwargs['container'] = self.container
+                init = init(*args, **kwargs)
+                definition['init'] = init
+            if not is_lambda and 'container' in kwargs:
+                args, kwargs = self.get_args_kwargs(init)
+        item = item(*args, **kwargs)
+        if is_lambda and isinstance(item, str):
+            # Special case for items that might be retrieved via lambda expressions
+            with suppress(Exception):
+                definition['item'] = self.container.load_item_from_string(item)
+                item, args, kwargs = self.instantiate(definition)
+        return item, args, kwargs
+
+    def __call__(self, event):
+        definition = event.params['definition']
+        item, args, kwargs = self.instantiate(definition)
+        return item
 
 
 class SetterInjection(Base):

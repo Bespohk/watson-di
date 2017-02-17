@@ -23,6 +23,12 @@ class SampleProcessor(processors.Base):
     pass
 
 
+class SampleLambdaWithInit(object):
+
+    def __init__(self, test):
+        self.test = test
+
+
 class DependencyWithDefinition(object):
     __ioc_definition__ = {
         'init': ['test']

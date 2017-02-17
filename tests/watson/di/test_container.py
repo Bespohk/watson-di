@@ -31,17 +31,27 @@ class TestIoc(object):
                     'init': {
                         'arg': 'some arg'
                     }
+                },
+                'lambda': {
+                    'item': lambda container: container.get('test')
+                },
+                'lambda_init': {
+                    'item': 'tests.watson.di.support.SampleLambdaWithInit',
+                    'init': lambda container: container.get('config')
                 }
             }
         })
         container.add_definition('def', {'item': lambda container: 'something'})
+        container.add_definition('config', {'item': {'test': 'value'}})
         assert isinstance(container.get('test'), SampleDependency)
         assert container.get('test2') == 'test'
         assert container.get('def') == 'something'
         assert container.get('def') == 'something'
         assert container.get('def') is container.get('def')
         assert container.get('test3') == 'some arg'
-        assert len(container.instantiated) == 4
+        assert isinstance(container.get('lambda'), SampleDependency)
+        assert container.get('lambda_init').test == 'value'
+        assert len(container.instantiated) == 7
 
     def test_get_failed_object(self):
         container = IocContainer()

@@ -162,6 +162,7 @@ class IocContainer(dispatcher.EventDispatcherAware):
             self._add_to_instantiated(name, instance)
         return instance
 
+
     def add(self, name, obj, type_='singleton'):
         """Add an instantiated dependency to the container.
 
@@ -240,16 +241,20 @@ class IocContainer(dispatcher.EventDispatcherAware):
     def _add_to_instantiated(self, name, item):
         self.__instantiated__[name] = item
 
+    def load_item_from_string(self, item):
+        try:
+            item = imports.load_definition_from_string(item)
+        except Exception as exc:
+            raise exceptions.NotFoundError(
+                '{} was not able to be imported ({}).'.format(item, exc)) from exc
+        return item
+
     def _get_dependency(self, definition):
         """Loads a definition item.
         """
         item = definition['item']
         if isinstance(item, str):
-            try:
-                item = imports.load_definition_from_string(definition['item'])
-            except Exception as exc:
-                raise exceptions.NotFoundError(
-                    '{} was not able to be imported ({}).'.format(item, exc)) from exc
+            item = self.load_item_from_string(item)
         return item
 
     def __contains__(self, name):
