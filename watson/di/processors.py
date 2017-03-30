@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import abc
-from inspect import isfunction
+from inspect import isfunction, signature
 from types import FunctionType
 from watson import di
 from watson.common.contextmanagers import suppress
@@ -58,7 +58,8 @@ class ConstructorInjection(Base):
             definition.update(item.__ioc_definition__)
         args, kwargs = [], {}
         is_lambda = definition.get('call_type', None) == FUNCTION_TYPE
-        if is_lambda:
+        sig = signature(item)
+        if 'container' in sig.parameters:
             kwargs['container'] = self.container
         if 'init' in definition:
             init = definition['init']
@@ -66,10 +67,12 @@ class ConstructorInjection(Base):
             args.extend(updated_args)
             kwargs.update(updated_kwargs)
             if isfunction(init):
-                kwargs['container'] = self.container
+                sig = signature(init)
+                if 'container' in sig.parameters:
+                    kwargs['container'] = self.container
                 init = init(*args, **kwargs)
                 definition['init'] = init
-            if not is_lambda and 'container' in kwargs:
+            if not is_lambda:
                 args, kwargs = self.get_args_kwargs(init)
         item = item(*args, **kwargs)
         if is_lambda and isinstance(item, str):
