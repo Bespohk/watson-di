@@ -157,11 +157,10 @@ class IocContainer(dispatcher.EventDispatcherAware):
             # The dependency needs to be instantiated or called
             instance = self._create_instance(name, definition)
         if (definition.get('type', None) != 'prototype'
-                or not definition['call_type']):
+                or not definition['call_type']):  # noqa
             # The dependency should only be retrieved once
             self._add_to_instantiated(name, instance)
         return instance
-
 
     def add(self, name, obj, type_='singleton'):
         """Add an instantiated dependency to the container.

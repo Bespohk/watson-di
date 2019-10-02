@@ -4,6 +4,7 @@ from inspect import isfunction, signature
 from types import FunctionType
 from watson import di
 from watson.common.contextmanagers import suppress
+from watson.common import imports
 from watson.di.types import FUNCTION_TYPE
 
 
@@ -25,7 +26,7 @@ class Base(di.ContainerAware, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def __call__(self, event):
         raise NotImplementedError(
-            'The processor <{}> must implement __call__'.format(get_qualified_name(self)))  # pragma: no cover
+            'The processor <{}> must implement __call__'.format(imports.get_qualified_name(self)))  # pragma: no cover
 
     def get_args_kwargs(self, obj):
         args, kwargs = [], {}
